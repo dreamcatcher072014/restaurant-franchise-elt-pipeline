@@ -19,3 +19,32 @@ The company defined the following key metrics, listed in priority order, the pip
 |Loyalty Program Impact|Compare loyalty members vs non-members in terms of spend and engagement in order to evaluate the ROI of the loyalty program.|Customers to be compared on by: Average Spend, Repeat Orders, Lifetime Value|
 |Top-Performing Locations|Identify best and worst-performing store locations to inform decisions on promotions, staffing, or expansion.|Locations to be compared by: Total revenue, Average order value, Orders per day/week. Locations will be ranked on total revenue |
 |Pricing & Discount Effectiveness|Measure how discounts affect revenue and profitability in order optimize pricing strategies.|Orders to be compared by: Revenue from discounted orders vs non-discounted, Number of orders before/after applying discounts |
+
+# Data Model
+
+The data model is broken down into raw, transformed, and mart layers.
+
+The details can be viewed [here](https://drive.google.com/file/d/13dutWa3VpALO5iYgiQx1cYxy8sDyPpxs/view?usp=drive_link).
+
+# Pipeline Architecture
+
+The design of pipeline architecture can be viewed [here](https://drive.google.com/file/d/1-0mgAff__QrRqfGoUGC011BQr_tEw5pc/view?usp=drive_link).
+
+# Considerations and Rationale
+
+In addition to system to technical design constraints, the client specifically limited implementation options to AWS.
+
+The following documents the decisions and considerations taken into account when creating the system design:
+
+| Requirement | Motivation | Technical Rationale |
+| ----------- | ---------- | --------- |
+| Schedulable | The restaraunt chain operates dozens of restaurants all over it's target region.  It has a need to maintain relevant information on a daily basis. This enables management to adapt to changes that affect their objectives in a timely fashion. A manual operator would be too slow and error prone so they opted to build a system that could be automated and scheduled. | **Airflow** was chosen in order to coordinate the operation of each of each pipeline stage.  Airflow's flexibility in adding stages, scheduling, and reporting make it a sutiable choice to schedue and automate the pipeline execution |
+| Manageable | Order information arrives from dozens of different locations.  The information needs to be communicable through a medium that is universally accessible and trivial to use.  Operators at different restaurant locations should be able to submit daily order information with minimal | A combination of **Google Drive** and **S3** were chosen to faciliate data injestion/extraction. **Google Drive** is a ubiquitous and universally accessible file service available to anyone with a gmail account.  One or more shared folders can be created where restaurant operators can easily add order data.  Alternatively, order data can also be collected automatically and written to one or more shared folders. **S3** serves as an ideal landing point for daily order data due its storage scaleability.  Furthermore, it's flexible integration options with other AWS services make ideal for communicating with the loading and transformation stages of the pipeline |
+| Secure | In addition to ensuring information security, there is also the need to ensure the development team can work on the pipeline without their exposure to costly/senstive company IT resources (i.e. AWS Cloud) | Access to **S3** data from unauthorized parties can be implemented in different ways.  Data can be encrypted in a variety ways and access to the bucket can be narrowly restricted using access keys or federated users.  For development security, **ECR** was chosen as the deployment mechanism for all jobs.  This will avoid giving developers direct access to AWS resources while ensuring a team of arbitrary size can collectively do development work on the pipeline |
+| Resilient | | |
+| Scaleable | | |
+| Traceable | | |
+
+
+
+
