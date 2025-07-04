@@ -1,2 +1,2 @@
 # restaurant-franchise-elt-pipeline
-An ELT pipeline for adapted from a restaurant franchise company 
+An batch driven ELT pipeline adapted from a real-life restaurant franchise company
