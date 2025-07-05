@@ -1,11 +1,13 @@
 # Project Background
-This is an example ELT pipeline that was adapted from an actual restaraunt franchise company.
+This a batch driven ELT pipeline adapted from a real-life client project for restaurant franchise company.
 
 The motivation for this pipeline originated with the company's need for processing large quantities of sales information, at scale, in support of their initiatives to open up dozens of new locations throughout their target region. 
 
 The goal was to have access to continuous and accurate metrics on daily restaurants sales in order to inform short and long term business strategy.
 
-The pipeline uses a batch processing architecture with daily scheduled updates and is designed to run on AWS.
+The pipeline uses a batch processing architecture with daily scheduled updates.  Due to client restrictions on available technology, it is designed to run exclusively on AWS.
+
+Feel free to use this project as is or adapt it to your needs. Use it freely for personal or commercial applications.
 
 # Required Metrics
 The company defined the following key metrics, listed in priority order, the pipeline needs to support in order to inform key business decisions.
@@ -38,13 +40,17 @@ The following documents the decisions and considerations taken into account when
 
 | Requirement | Motivation | Technical Rationale |
 | ----------- | ---------- | --------- |
-| Schedulable | The restaraunt chain operates dozens of restaurants all over it's target region.  It has a need to maintain relevant information on a daily basis. This enables management to adapt to changes that affect their objectives in a timely fashion. A manual operator would be too slow and error prone so they opted to build a system that could be automated and scheduled. | **Airflow** was chosen in order to coordinate the operation of each of each pipeline stage.  Airflow's flexibility in adding stages, scheduling, and reporting make it a sutiable choice to schedue and automate the pipeline execution |
-| Manageable | Order information arrives from dozens of different locations.  The information needs to be communicable through a medium that is universally accessible and trivial to use.  Operators at different restaurant locations should be able to submit daily order information with minimal | A combination of **Google Drive** and **S3** were chosen to faciliate data injestion/extraction. **Google Drive** is a ubiquitous and universally accessible file service available to anyone with a gmail account.  One or more shared folders can be created where restaurant operators can easily add order data.  Alternatively, order data can also be collected automatically and written to one or more shared folders. **S3** serves as an ideal landing point for daily order data due its storage scaleability.  Furthermore, it's flexible integration options with other AWS services make ideal for communicating with the loading and transformation stages of the pipeline |
-| Secure | In addition to ensuring information security, there is also the need to ensure the development team can work on the pipeline without their exposure to costly/senstive company IT resources (i.e. AWS Cloud) | Access to **S3** data from unauthorized parties can be implemented in different ways.  Data can be encrypted in a variety ways and access to the bucket can be narrowly restricted using access keys or federated users.  For development security, **ECR** was chosen as the deployment mechanism for all jobs.  This will avoid giving developers direct access to AWS resources while ensuring a team of arbitrary size can collectively do development work on the pipeline |
-| Resilient | | |
-| Scaleable | | |
-| Traceable | | |
+| Accessible | Order information arrives from dozens of different locations.  The information needs to be communicable through a medium that is universally accessible and trivial to use.  Operators at different restaurant locations should be able to submit daily order information with minimal effort. The delivery mechanism should also be built for automation. | A combination of **Google Drive** and **S3** were chosen to faciliate data injestion/extraction. **Google Drive** is a universally accessible file service available to anyone with a gmail account.  One or more shared folders can be created where restaurant operators can easily add their data.  Alternatively, order data can also be collected automatically and written to one or more shared folders through simple software tools.  **S3** serves as an ideal entry point for daily order data.  It's storage capacity is also arbitrarily scaleable allowing it to adapt to large increaases in data volume.  Furthermore, it's flexible integration options with other AWS services allow for many options with regards to loading and transformation |
+| Scaleable loading | Over the course of the pipeline's operation, the amount of data processed will rise significantly. Though individual files won't amount to more then dozens of MB at a time, the total amount data processed will certainly reach several TB levels  The pipeline should be capable of accommodating an ever-expanding data set as new restaurants are opened and start transmitting their daily data. | Data loading will be handled by **Lambda** functions. Prior to injesting the file into the transformation stage, **Lambda** functions, running inside an **ECR** container, will handle all cleaning and error processing. **Lambda** can support up to 10GB per call which is well within the expected limits of any individual file.  In addition **Lambda** functions can scale to an arbitrary number of instances.
+| Scaleable, efficient, and flexible data transformation | Over the course of the pipeline's operation, the size and variety of data is expected to grow and change.  Adapting to changes should be be focused and scaleable both in terms of system design and developer effort. | Tranformation jobs, running inside **ECR** instances, will deployed to an **Apache Spark** instance running on **AWS EMR**. **Apache Spark** accomodates fast and efficient computation of large data sets at scale.  Jobs will be broken down into layers to enable efficient transformation from raw to refined data, and ultimately curated data to be used by the business.
+| Scaleable and cost-effective data storage | Data storage and querying requirements will grow predictably but with varying consistency (i.e. not all new restaurants will begin operation at the same time, new restaurants may begin operations at different times in the future) | A serverless configuration of **AWS Redshift** will be used in order to accommodate flexible data storage requirements at scale.  
+| Automatable and schedulable | The restaraunt chain operates dozens of restaurants all over it's target region.  Relevant information on operations need to be available a daily basis enabling management to adapt in a timely fashion. Manual operation at scale is slow and error prone.  The pipeline has to operate and respond to ever changing data inputs with minimal to no manual intervention | **Airflow** was chosen in order to coordinate the operation of each of each pipeline stage.  Airflow's flexibility in adding stages, scheduling, and reporting make it a sutiable choice for fulfilling scheduling and automation requirements |
+| Information security | Operational data is a business critical resource and must be adequately protected from unauthorized parties | Access to **S3** data from unauthorized parties can be controlled via encryption and access to the bucket can be narrowly restricted using access keys.|
 
-
-
-
+**A note on ECR as the deployment mechanism for all jobs** 
+Container based deployments enable the development team to, efficiently and securely, enhance and maintain the data pipeline through its lifecycle.  Using a container mechanism has the following clear advantages:
+- Avoids giving the development team direct access to AWS resources which can threaten the stability and security of the platform
+- Enables the straightforward integration with CI/CD processes
+- Enables the development team to work safely and efficiently and independently on changes to pipeline logic
+- Enables for more complex deployments of pipeline logic
+- Enables for flexible tooling (i.e. unit testing, code linting, pre-processing, etc) in the development of the pipeline logic
