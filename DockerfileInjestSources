@@ -1,0 +1,15 @@
+# Use a base Python image
+FROM python:3.9-slim-buster
+
+# Set working directory to /var/task (AWS Lambda default)
+WORKDIR /var/task
+
+# Copy application files into the container
+COPY ingest_sources.py .
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Set the ENTRYPOINT to execute the Python script
+ENTRYPOINT ["python", "ingest_sources.py"]
