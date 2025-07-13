@@ -1,0 +1,17 @@
+# Use a base Python image
+FROM python:3.9-slim-buster
+
+# Set working directory to /var/task (AWS Lambda default)
+WORKDIR /var/task
+
+# Copy application files into the container
+COPY load_raw.py .
+COPY requirements-load-raw.txt .
+
+# Install dependencies
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements-load-raw.txt
+
+# Set the entry point and handler correctly
+ENTRYPOINT ["/var/lang/bin/python3.9", "-m", "awslambdaric"]
+CMD ["load_raw.load_raw"]

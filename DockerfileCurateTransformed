@@ -5,12 +5,12 @@ FROM python:3.9-slim-buster
 WORKDIR /var/task
 
 # Copy application files into the container
-COPY ingest_sources.py .
-COPY requirements-ingest-sources.txt .
+COPY curate_transformed.py .
+COPY requirements-curate-transformed.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-curate-transformed.txt
 
 # Set the ENTRYPOINT to execute the Python script
-ENTRYPOINT ["python", "ingest_sources.py"]
+ENTRYPOINT ["python", "curate_transformed.py"]

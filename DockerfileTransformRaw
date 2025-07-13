@@ -5,12 +5,12 @@ FROM python:3.9-slim-buster
 WORKDIR /var/task
 
 # Copy application files into the container
-COPY ingest_sources.py .
-COPY requirements-ingest-sources.txt .
+COPY transform_raw.py .
+COPY requirements-transform-raw.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-transform-raw.txt
 
 # Set the ENTRYPOINT to execute the Python script
-ENTRYPOINT ["python", "ingest_sources.py"]
+ENTRYPOINT ["python", "transform_raw.py"]
