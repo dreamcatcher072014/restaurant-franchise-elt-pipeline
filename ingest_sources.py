@@ -7,14 +7,7 @@ from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
 import boto3
 from botocore.exceptions import ClientError
 import sqlalchemy as sa
- 
 import pandas as pd
-
-# Constants
-AWS_RDS_DATA = 'rds-data'
-AWS_S3 = 's3'
-AWS_SECRETS_MANAGER = 'secretsmanager'
-AWS_DYNAMODB = 'dynamodb'
 
 # Environment Variables (Configured in Lambda)
 ENVIRONMENT = os.getenv('ENVIRONMENT')
@@ -27,6 +20,10 @@ AWS_DYNAMODB_TABLE_NAME = os.getenv('AWS_DYNAMODB_TABLE_NAME')
 AWS_S3_FOLDER_PATH = os.getenv('AWS_S3_FOLDER_PATH')
 AWS_REGION_NAME = os.getenv('AWS_REGION_NAME')
 AWS_DB_NAME = os.getenv('AWS_DB_NAME') 
+AWS_RDS_DATA = os.getenv('AWS_RDS_DATA')
+AWS_S3 = os.getenv('AWS_S3')
+AWS_SECRETS_MANAGER = os.getenv('AWS_SECRETS_MANAGER')
+AWS_DYNAMODB = os.getenv('AWS_DYNAMODB')
 
 # Generate Timestamp for File Naming
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
