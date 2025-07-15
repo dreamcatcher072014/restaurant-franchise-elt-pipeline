@@ -159,7 +159,7 @@ def upload_to_s3(conn):
 
         # Upload to S3
         s3_client = get_service_client(AWS_S3)
-        file_name = f"{table_name}_{timestamp}.json"
+        file_name = f"{table_name}_{timestamp}.csv"
         
         repsonse = s3_client.upload_file(file_path, AWS_S3_BUCKET_NAME, AWS_S3_FOLDER_PATH + '/' + file_name)
         

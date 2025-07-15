@@ -1,5 +1,11 @@
-# Use a base Python image
-FROM python:3.9-slim-buster
+# Dockerfile
+FROM public.ecr.aws/emr-serverless/spark/emr-6.9.0:latest
+
+USER root
+# MODIFICATIONS GO HERE
+
+# EMRS will run the image as hadoop
+USER hadoop:hadoop
 
 # Set working directory to /var/task (AWS Lambda default)
 WORKDIR /var/task

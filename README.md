@@ -55,5 +55,23 @@ Container based deployments enable the development team to, efficiently and secu
 - Enables for more complex deployments of pipeline logic
 - Enables for flexible tooling (i.e. unit testing, code linting, pre-processing, etc) in the development of the pipeline logic
 
-docker build -f DockerfileInjestSources -t rf-elt-pipeline/injest-sources:1.0 .
-docker run --rm --env-file ./.env rf-elt-pipeline/injest-sources:1.0
+# Installation and Configuration
+
+A detailed explanation of installation, set up, and configuration options can be found here: 
+
+### Command Reference
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 925401940064.dkr.ecr.us-east-2.amazonaws.com
+
+docker build -f DockerfileIngestSources -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources .
+
+docker load -i 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources
+
+docker push 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources
+
+docker build -f DockerfileLoadRaw -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw .
+
+docker load -i 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw
+
+docker push 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest
+
+docker run --rm --env-file ./.env rf-elt-pipeline/load-raw:1.0 
