@@ -1,12 +1,15 @@
 import datetime
 import json
 import os
+import re
 import time
 
 from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
 import boto3
 from botocore.exceptions import ClientError
 import sqlalchemy as sa
+
+import numpy as np
 import pandas as pd
 
 # Environment Variables (Configured in Lambda)
@@ -27,6 +30,12 @@ AWS_DYNAMODB = os.getenv('AWS_DYNAMODB')
 
 # Generate Timestamp for File Naming
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+def remove_non_printable(text):
+    if isinstance(text, str):
+        # Remove non-printable ASCII characters (0-31 and 127)
+        return re.sub(r'[\x00-\x1F\x7F]', ' ', text)
+    return text
 
 def get_service_client(service_name):
     session = boto3.session.Session()    
@@ -141,12 +150,20 @@ def upload_to_s3(conn):
         rows = conn.execute(query)
 
         df = pd.DataFrame(data=rows)
-
+        
         if df.empty:
             print(f"No new data found for table: {table_name}")
             continue
-        
-        last_processed_date = pd.to_datetime(df['created_at'].max()) if not df.empty else None
+
+        # Replace blank values with nan
+        df = df.map(remove_non_printable)
+        df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+        df.fillna('NOVALUE', inplace=True)        
+
+        # Convert 'created_at' to datetime
+        df['created_at'] = pd.to_datetime(df['created_at'], errors='coerce', format='%Y-%m-%d_%H:%M:%S')
+
+        last_processed_date = df['created_at'].max() if not df.empty else None
         last_processed_date = str(last_processed_date) if last_processed_date else None
         print(f"Last processed date for {table_name}: {last_processed_date}")
 

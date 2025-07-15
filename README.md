@@ -66,6 +66,8 @@ docker build -f DockerfileIngestSources -t 925401940064.dkr.ecr.us-east-2.amazon
 
 docker load -i 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources
 
+docker run --rm --env-file ./.env 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources
+
 docker push 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources
 
 docker build -f DockerfileLoadRaw -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw .
