@@ -24,10 +24,10 @@
                "ownerIdentity":{  
                   "principalId":"A3NL1KOZZKExample"
                },
-               "arn":"arn:aws:s3:::amzn-s3-demo-bucket"
+               "arn":"arn:aws:s3:::restaurant-franchise-elt-pipeline-dev/raw_data/date_dim_2025-07-15_20-08-57.csv"
             },
             "object":{  
-               "key": "raw_data/order_items_2025-07-11_23-05-34.json",
+               "key": "raw_data/date_dim_2025-07-15_20-08-57.csv",
                "size":1024,
                "eTag":"d41d8cd98f00b204e9800998ecf8427e",
                "versionId":"096fKKXTRTtl3on89fVO.nfljtsv6qko",
