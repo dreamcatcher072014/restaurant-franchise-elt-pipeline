@@ -1,16 +1,25 @@
-# Use a base Python image
-FROM python:3.9-slim-buster
+# Use AWS Lambda Python 3.9 base image for x86_64 (not arm64)
+
+# For production use, using the official AWS Lambda base image
+FROM public.ecr.aws/lambda/python:3.9 AS base
+
+# For local development, Use a base Python image
+# FROM python:3.9-slim-buster
 
 # Set working directory to /var/task (AWS Lambda default)
 WORKDIR /var/task
 
 # Copy application files into the container
-COPY ingest_sources.py .
-COPY requirements-ingest-sources.txt .
+COPY src/ingest_sources.py .
+COPY docker/requirements-ingest-sources.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements-ingest-sources.txt
 
 # Set the ENTRYPOINT to execute the Python script
-ENTRYPOINT ["python", "ingest_sources.py"]
+# ENTRYPOINT ["python", "ingest_sources.py"]
+
+# For production use, Set the entry point and handler correctly
+ENTRYPOINT ["/var/lang/bin/python3.9", "-m", "awslambdaric"]
+CMD ["lambda_function.load_raw"]

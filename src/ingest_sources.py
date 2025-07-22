@@ -4,29 +4,13 @@ import os
 import re
 import time
 
+import numpy as np
+import pandas as pd
+
 from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
 import boto3
 from botocore.exceptions import ClientError
 import sqlalchemy as sa
-
-import numpy as np
-import pandas as pd
-
-# Environment Variables (Configured in Lambda)
-ENVIRONMENT = os.getenv('ENVIRONMENT')
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY= os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_DB_HOST = os.getenv('AWS_DB_HOST')
-AWS_DB_CREDENTIALS = os.getenv('AWS_DB_CREDENTIALS')
-AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
-AWS_DYNAMODB_TABLE_NAME = os.getenv('AWS_DYNAMODB_TABLE_NAME')
-AWS_S3_FOLDER_PATH = os.getenv('AWS_S3_FOLDER_PATH')
-AWS_REGION_NAME = os.getenv('AWS_REGION_NAME')
-AWS_DB_NAME = os.getenv('AWS_DB_NAME') 
-AWS_RDS_DATA = os.getenv('AWS_RDS_DATA')
-AWS_S3 = os.getenv('AWS_S3')
-AWS_SECRETS_MANAGER = os.getenv('AWS_SECRETS_MANAGER')
-AWS_DYNAMODB = os.getenv('AWS_DYNAMODB')
 
 # Generate Timestamp for File Naming
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -158,7 +142,7 @@ def get_db_connection(secret):
 def upload_to_s3(conn):
     file_structures = json.loads(os.getenv('FILE_STRUCTURES'))
 
-    dynamo_db_client = get_service_client(AWS_DYNAMODB)
+    dynamo_db_client = get_service_client(os.getenv('AWS_DYNAMODB'))
 
     for table_name in file_structures.keys():
         print(f"Processing table: {table_name}")    
@@ -194,7 +178,7 @@ def upload_to_s3(conn):
         print(f"Data for {table_name} saved to {file_path}")
 
         # Upload to S3
-        s3_client = get_service_client(AWS_S3)
+        s3_client = get_service_client(os.getenv('AWS_S3'))
         file_name = f"{table_name}_{timestamp}.csv"
         
         repsonse = s3_client.upload_file(file_path, os.getenv('AWS_S3_BUCKET_NAME'), os.getenv('AWS_S3_FOLDER_PATH') + '/' + file_name)

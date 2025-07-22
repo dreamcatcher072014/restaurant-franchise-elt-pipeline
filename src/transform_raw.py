@@ -10,48 +10,30 @@ import sqlalchemy as sa
  
 import pandas as pd
 
-# Constants
-AWS_RDS_DATA = 'rds-data'
-AWS_S3 = 's3'
-AWS_SECRETS_MANAGER = 'secretsmanager'
-AWS_DYNAMODB = 'dynamodb'
-
-# Environment Variables (Configured in Lambda)
-ENVIRONMENT = os.getenv('ENVIRONMENT')
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY= os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_DB_HOST = os.getenv('AWS_DB_HOST')
-AWS_DB_CREDENTIALS = os.getenv('AWS_DB_CREDENTIALS')
-AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
-AWS_DYNAMODB_TABLE_NAME = os.getenv('AWS_DYNAMODB_TABLE_NAME')
-AWS_S3_FOLDER_PATH = os.getenv('AWS_S3_FOLDER_PATH')
-AWS_REGION_NAME = os.getenv('AWS_REGION_NAME')
-AWS_DB_NAME = os.getenv('AWS_DB_NAME') 
-
 # Generate Timestamp for File Naming
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 def get_service_client(service_name):
     session = boto3.session.Session()    
         
-    if ENVIRONMENT == 'development':
+    if os.getenv('ENVIRONMENT') == 'development':
         client = session.client(
             service_name=service_name,
-            region_name=AWS_REGION_NAME,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+            region_name=os.getenv('AWS_REGION_NAME'),
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
         )
     else:
         client = session.client(
             service_name=service_name,
-            region_name=AWS_REGION_NAME
+            region_name=os.getenv('AWS_REGION_NAME')
         )
     
     return client
 
 def get_secret(secret_name):
     try:
-        client = get_service_client(AWS_SECRETS_MANAGER)
+        client = get_service_client(os.getenv('AWS_SECRETS_MANAGER'))
         cache_config = SecretCacheConfig()
         cache = SecretCache(config=cache_config, client=client)
         secret = cache.get_secret_string(secret_id=secret_name)
@@ -81,7 +63,7 @@ def get_last_processed_date(table_name, client):
     print(f"Retrieving last processed date for table: {table_name}")
     
     response = client.get_item(
-        TableName=AWS_DYNAMODB_TABLE_NAME,
+        TableName=os.getenv('AWS_DYNAMODB_TABLE_NAME'),
         ConsistentRead=True,
         ProjectionExpression='processed_date',
         Key={'table_name': {'S': table_name}}
@@ -99,7 +81,7 @@ def get_last_processed_date(table_name, client):
 
 def mark_last_processed_date(table_name, timestamp, client):
     client.put_item(
-        TableName=AWS_DYNAMODB_TABLE_NAME,
+        TableName=os.getenv('AWS_DYNAMODB_TABLE_NAME'),
         Item={'table_name': {'S': table_name}, 'processed_date': {'S': timestamp}}
     )
 
@@ -117,23 +99,10 @@ def create_query(table_name, client):
     return query
 
 def get_db_connection(secret):
-    username = secret['username']
-    password = secret['password']
-    host = AWS_DB_HOST  
-    db = AWS_DB_NAME
+    return sa.create_engine(f'postgresql+psycopg2://{secret['username']}:{secret['password']}@{secret['host']}/{secret['db']}')
 
-    engine = sa.create_engine(f'postgresql+psycopg2://{username}:{password}@{host}/{db}')
-
-    return engine.connect()
-
-def upload_to_s3(conn):
-    source_tables = [
-        'order_items',
-        'order_item_options',
-        'date_dim',
-    ]
-
-    dynamo_db_client = get_service_client(AWS_DYNAMODB)
+def transform_raw(conn):
+    
 
     for table_name in source_tables:
         print(f"Processing table: {table_name}")    
@@ -161,10 +130,10 @@ def upload_to_s3(conn):
         print(f"Data for {table_name} saved to {file_path}")
 
         # Upload to S3
-        s3_client = get_service_client(AWS_S3)
+        s3_client = get_service_client(os.getenv('AWS_S3'))
         file_name = f"{table_name}_{timestamp}.json"
         
-        repsonse = s3_client.upload_file(file_path, AWS_S3_BUCKET_NAME, AWS_S3_FOLDER_PATH + '/' + file_name)
+        repsonse = s3_client.upload_file(file_path, os.getenv('AWS_S3_BUCKET_NAME'), os.getenv('AWS_S3_FOLDER_PATH') + '/' + file_name)
         
         print(f"Uploaded {table_name} data to S3 at {file_name}")
         print(repsonse)
@@ -173,7 +142,7 @@ def upload_to_s3(conn):
 
 def ingest_sources():
     try:
-        secret = get_secret(AWS_DB_CREDENTIALS)
+        secret = get_secret(os.getenv('AWS_DB_CREDENTIALS'))
         secret = json.loads(secret)  # Convert JSON string to dictionary
 
         conn = get_db_connection(secret)
