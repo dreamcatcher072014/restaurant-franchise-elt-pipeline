@@ -74,4 +74,6 @@ docker load -i 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw
 
 docker push 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest
 
-docker run --rm --env-file ./.env rf-elt-pipeline/load-raw:1.0
+docker run --env-file ./.env --rm --platform=linux/amd64 -p 9000:8080 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources:latest
+
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
