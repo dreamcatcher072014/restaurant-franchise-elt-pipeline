@@ -62,18 +62,19 @@ A detailed explanation of installation, set up, and configuration options can be
 ### Command Reference
 aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 925401940064.dkr.ecr.us-east-2.amazonaws.com
 
-docker build -f DockerfileIngestSources -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources .
-
+## Ingest sources
+docker build --pull --no-cache --platform linux/amd64 -f Dockerfile -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources .
 docker load -i 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-ingest_sources
-
 docker push 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources
+docker run --env-file ./.env --rm --platform=linux/amd64 -p 9000:8080 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources:latest
 
-docker build -f DockerfileLoadRaw -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw .
-
+## Load raw
+docker build --pull --no-cache --platform linux/amd64 -f Dockerfile -t 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest -o type=oci,name=925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest,dest=./925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw .
 docker load -i 925401940064.dkr.ecr.us-east-2.amazonaws.com-rf-load_raw
-
 docker push 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest
 
-docker run --env-file ./.env --rm --platform=linux/amd64 -p 9000:8080 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/ingest_sources:latest
+docker run --env-file ./.env --rm --platform=linux/amd64 -p 9000:8080 925401940064.dkr.ecr.us-east-2.amazonaws.com/rf/load_raw:latest
+
+
 
 curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'

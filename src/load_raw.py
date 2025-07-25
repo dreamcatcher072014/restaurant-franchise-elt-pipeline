@@ -1,12 +1,13 @@
 import logging
 import json
 import os
-import time
 
 import boto3
 
+import traceback
+
 def get_test_event():
-    with open('./test/load_raw_test.json', 'r') as file:
+    with open('./load_raw_test.json', 'r') as file:
         data = file.read()
         return json.loads(data)
     
@@ -18,8 +19,11 @@ def get_copy_query(file_name):
     for prefix in file_structures.keys():
         if file_name.startswith(prefix):
             query = file_structures[prefix]['copy_query']
-            s3uri = f's3://{os.getenv('AWS_S3_BUCKET_NAME')}/{os.getenv('AWS_S3_FOLDER_PATH')}/{file_name}'
-            query = query.replace('s3uri', f'\'{s3uri}\'').replace('iamrole', f'\'{os.getenv('AWS_REDSHIFT_ROLE_ARN')}\'')
+            s3uri = f"'s3://{os.getenv('AWS_S3_BUCKET_NAME')}/{os.getenv('AWS_S3_FOLDER_PATH')}/{file_name}'"
+            
+            query = query.replace('s3uri', s3uri)
+            query = query.replace('iamrole', f"'{os.getenv('AWS_REDSHIFT_ROLE_ARN')}'")
+
             return query
             
     return None
@@ -42,27 +46,24 @@ def get_service_client(service_name):
     
     return client
 
-def load_raw(event, context):
+def lambda_handler(event, context):
     try:
         if os.getenv('ENVIRONMENT') =='development':
             event = get_test_event()
     
-        bucket_name = event['Records'][0]['s3']['bucket']['name']
         object_key = event['Records'][0]['s3']['object']['key']
         file_name = object_key.split('/')[1]
 
-        # Get the s3 file
-        s3_client = get_service_client(os.getenv('AWS_S3'))
-        s3_client.download_file(bucket_name, object_key, file_name)
-
         copy_sql_query = get_copy_query(file_name)
 
-        redshift_client = boto3.client('redshift-data')
-        
+        print(f'Executing Redshift copy command for file: {copy_sql_query}')
+
+        redshift_client = get_service_client(os.getenv('AWS_REDSHIFT_DATA_API'))
         response = redshift_client.execute_statement(
-            Database=os.getenv('AWS_REDSHIFT_DB'),
-            Sql=copy_sql_query,
-            WorkgroupName=os.getenv('AWS_REDSHIFT_WORKGROUP_ARN')
+            WorkgroupName=os.getenv("AWS_REDSHIFT_WORKGROUP_NAME"),  # Redshift Serverless Workgroup ARN
+            SecretArn=os.getenv("AWS_REDSHIFT_SECRET_ARN"),      # Secrets Manager ARN
+            Sql=copy_sql_query,                                  # Your COPY or INSERT SQL
+            Database=os.getenv("AWS_REDSHIFT_DB")                # DB name inside Redshift
         )
 
         if (response['ResponseMetadata']['HTTPStatusCode'] != 200):
@@ -82,18 +83,10 @@ def load_raw(event, context):
 
     except Exception as e:
         logging.error(f"Error during Lambda execution: {e}")
+
+        print(traceback.format_exc())
+
         return {
             'statusCode': 500,
             'body': json.dumps(f"Lambda execution failed: {e}")
         }
-    
-
-if os.getenv('ENVIRONMENT') == 'development':
-    # Start script timer        
-    start_time = time.time()
-
-    # Transfer raw data from source to S3
-    load_raw(None, None)
-
-    # Print script execution time
-    print("--- %s minutes ---" % str((time.time() - start_time)/60))
