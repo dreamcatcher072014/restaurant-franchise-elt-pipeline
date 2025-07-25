@@ -1,4 +1,0 @@
-boto3==1.38.46
-pandas==2.2.3
-numpy==1.26.4
-awslambdaric==2.0.2
