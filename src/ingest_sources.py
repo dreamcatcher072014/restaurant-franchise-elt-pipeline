@@ -2,10 +2,8 @@ import datetime
 import json
 import os
 import re
-import time
 
 import pandas as pd
-import numpy as np
 
 from aws_secretsmanager_caching import SecretCache, SecretCacheConfig
 import boto3

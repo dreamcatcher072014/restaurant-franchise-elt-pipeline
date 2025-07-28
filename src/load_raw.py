@@ -69,9 +69,6 @@ def lambda_handler(event, context):
         if (response['ResponseMetadata']['HTTPStatusCode'] != 200):
             raise Exception(f"Failed to execute Redshift copy command: {response}")
 
-        # Delete the local file after processing
-        if os.path.exists(file_name):
-            os.remove(file_name)
         
         # Upload the processed file to the raw table in Redshift
         print(f'Loading data from {object_key} to Redshift...')
